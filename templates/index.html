@@ -106,8 +106,8 @@
         </div>
     </div>
 
-    <!-- Input Section for Phone Number and OTP -->
-    {% if not is_running %}
+    <!-- Input Section for Phone Number or OTP -->
+    {% if not is_running and not phone_number %}
     <div class="input-section">
         <h3>Enter Your Phone Number:</h3>
         <form action="{{ url_for('authenticate_route') }}" method="POST">
@@ -115,7 +115,7 @@
             <button type="submit">Submit</button>
         </form>
     </div>
-    {% else %}
+    {% elif not is_running and phone_number %}
     <div class="input-section">
         <h3>Enter OTP to Authenticate:</h3>
         <form action="{{ url_for('authenticate_otp') }}" method="POST">
