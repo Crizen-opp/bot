@@ -86,7 +86,7 @@
     <!-- Buttons for starting and stopping the bot -->
     <div>
         {% if not is_running %}
-            <a href="{{ url_for('authenticate') }}" class="btn">Start Bot</a>
+            <a href="{{ url_for('authenticate_route') }}" class="btn">Start Bot</a>
         {% else %}
             <a href="{{ url_for('stop') }}" class="btn">Stop Bot</a>
         {% endif %}
