@@ -17,6 +17,7 @@ api_hash = 'eebd9bca724210a098f3f4b23822d1ef'
 # Use in-memory session to avoid using a file-based session
 client = None
 is_running = False
+phone_number = None
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -30,9 +31,10 @@ async def authenticate(phone_number):
 
     # Handle OTP if required
     if not await client.is_user_authorized():
-        otp = input("Enter the OTP received: ")  # This will now ask for OTP interactively
-        await client.sign_in(phone_number, otp)
+        logging.info("OTP required, please check your Telegram for the code.")
+        return False  # OTP will be sent to the phone number
     logging.info("Client authenticated")
+    return True
 
 # Function to handle new messages
 @client.on(events.NewMessage())
@@ -93,12 +95,24 @@ def index():
 
 @app.route('/authenticate', methods=['POST'])
 def authenticate_route():
-    global is_running
+    global phone_number, is_running
     phone_number = request.form['phone_number']
 
     # Start the authentication process
-    threading.Thread(target=authenticate, args=(phone_number,)).start()
-    is_running = True
+    success = asyncio.run(authenticate(phone_number))
+    if success:
+        is_running = True
+    return redirect(url_for('index'))
+
+@app.route('/authenticate_otp', methods=['POST'])
+def authenticate_otp():
+    global client, is_running
+    otp = request.form['otp']
+    
+    # Sign in with OTP
+    if client:
+        asyncio.run(client.sign_in(phone_number, otp))
+        is_running = True  # Authentication successful
     return redirect(url_for('index'))
 
 @app.route('/stop')
