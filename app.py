@@ -101,6 +101,8 @@ def authenticate_route():
         is_running = True
         # Start the bot now that the client is authenticated
         threading.Thread(target=start_telegram_bot, daemon=True).start()
+    else:
+        return render_template('otp_form.html', phone_number=phone_number)  # OTP input form
     return redirect(url_for('authenticate'))
 
 @app.route('/authenticate_otp', methods=['POST'])
