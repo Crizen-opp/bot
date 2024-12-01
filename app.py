@@ -105,4 +105,4 @@ def stop():
 
 # Run the Flask app
 if __name__ == '_main_':
-    app.run(host='0.0.0.0', port=5000)  # For local testing
+    app.run(host='0.0.0.0', port=10000)  # For local testing
