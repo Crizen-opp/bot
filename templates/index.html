@@ -1,1 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Telegram Bot Controller</title>
+</head>
+<body>
+    <h1>Telegram Bot Control Panel</h1>
+    <p>Bot is currently: {{ 'Running' if is_running else 'Stopped' }}</p>
+    <form action="/start" method="get">
+        <button type="submit">Start Bot</button>
+    </form>
+    <form action="/stop" method="get">
+        <button type="submit">Stop Bot</button>
+    </form>
+</body>
+</html>
 
