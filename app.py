@@ -4,6 +4,10 @@ import logging
 import time
 from telethon import TelegramClient, events
 import asyncio
+from telethon.sessions import MemorySession
+
+
+
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -12,7 +16,8 @@ app = Flask(__name__)
 api_id = 23679868
 api_hash = 'eebd9bca724210a098f3f4b23822d1ef'
 
-client = TelegramClient('user', api_id, api_hash)
+# Use in-memory session to avoid using a file-based session
+client = TelegramClient(MemorySession(), api_id, api_hash)
 
 # Start/stop flags
 is_running = False
