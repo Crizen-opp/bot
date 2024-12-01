@@ -99,11 +99,12 @@ def authenticate_route():
     success = asyncio.run(authenticate(phone_number))
     if success:
         is_running = True
-        # Start the bot now that the client is authenticated
+        # Start the bot once authenticated
         threading.Thread(target=start_telegram_bot, daemon=True).start()
+        return redirect(url_for('index'))  # Direct back to index page
     else:
-        return render_template('otp_form.html', phone_number=phone_number)  # OTP input form
-    return redirect(url_for('authenticate'))
+        # Show OTP input form if OTP is required
+        return render_template('otp_form.html', phone_number=phone_number)  # Redirect to OTP form page
 
 @app.route('/authenticate_otp', methods=['POST'])
 def authenticate_otp():
