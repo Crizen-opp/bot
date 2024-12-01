@@ -14,7 +14,7 @@ app.secret_key = 'your_secret_key'  # Required for session handling
 api_id = 23679868
 api_hash = 'eebd9bca724210a098f3f4b23822d1ef'
 
-# Use in-memory session to avoid using a file-based session
+# Global variables
 client = None
 is_running = False
 phone_number = None
@@ -37,8 +37,7 @@ async def authenticate(phone_number):
     return True
 
 # Function to handle new messages
-@client.on(events.NewMessage())
-async def handler(event):
+async def handle_new_message(event):
     try:
         logging.info(f"Received message from {event.sender_id}: {event.message.text}")
         message = "\n'"  # Define message to send
@@ -49,12 +48,7 @@ async def handler(event):
             sender_username = sender.username if sender.username else ""
             sender_user_id = sender.id
 
-            exclude_usernames = [
-                'vaishu9630','Universe9911','salbahepadin01','B4DCHILDD','xinchenganna','online7259','alwayssalbahe_kram','depressedpasayo','xinchengxiaoli','salbahenga','ILABYOUACEZYYY','Xincheng_Nikkkkkk','Saaalbahemeh','zariiiii_aaahh','LOUIE67889','DDAANNAAYYA','Xincheng_dayy','Angelaaaa0000000','BurgerkaaasakenBrrt','anna123abc1','DAANNAAYYAA','zhangmei123','xiaolong1123452','xiaohao66883','ILABYOUNGA','ameizxc','xincheng_nik','Xincheng_fei','countNumber1Bot','supermegabigb0y','superbigboOoy', 'Goldy6522','BurgerkaaasakenBrrt', 'levi_here69', 'Chariiiiiiiisss', 'cozur125',
-                'Shafffffiiiii','hanxin7889','juigi55','xinchengyanwan12','DoomCartel','lovieee_eee','xinchengasheng','baixin888999','angelamiii0000','xinchengasheng', 'jhejeeeeee','Angelababy000000','DANAYA_01','MRB2TH', 'salbahesilouieperosalbahedinako', 'CALI000000000', 'T4ngInmoPartXVIII', 
-                'loviieeeeeeeeeeee','ijsdghf88','shfafkl12','okicando9','sasuke666111','youaredog147','microsoft4567','DaaNaaYaaaa','xincheng6661','kmt200223','fdaslfka1','tunai22','mxdbfj22','smk750830','fanrui44','ainygr11','xincheng6661','xiao_an242424','hanxin7410','fanrui23','hanxin852','fanrui88','jcc4566','ymtg1126','hanxin412','xiaomi291123','fdgt445','hanxin965','huahua6634','wgsh22','MRB2TH','xinchang33','hanxin963','wsws223','xinchengyanwan1234','DANNAYYA','Xcrefund2','xincheng112233','xinchengsanwei','tunai23','xiaolai11222','angelamiii0000','sub777777', 'crafter0012','ainyge11','refundacc1','xiaohao1199','keepyamovinbroo','xcamei4', 'sanyangisathief', 'badingkanga', 'Whereareyoufromhomie', 
-                'NOTENGOBANGKARYA','xccustom_bot','tunai222','tunai111','tunai22','EyyyPppTttt','whoareyou147','youaredog147','stoptoban12','settin100','Whereareyoufromhomiee','qwe13120','baixin999888','xcgjcw521','xcpay01','jinhua55555','yanwan233','jhf554','jinhua3333','xdf251','waterlily1230', 'fanrui55','sddg52','dfs1243','tunai213','jbs5226','i198501','asdsa5585','xiaomi200022','jayne0000','hhgg5512','xiaolai201023','diha332','fanrui212','xincheng778899','hoelyfreakingshit', 'lusiiiiiiiiiiii', 'lusiyoudona', 'XCZF11','username1112226','xincheng9991','xiaolong1123452', 'ym2211142','atuthu159753', 'ym2203199'
-            ]
+            exclude_usernames = ['vaishu9630', 'Universe9911', 'salbahepadin01']  # List of usernames to exclude
             exclude_user_ids = [7716075514]  # List of user IDs to exclude
 
             if sender_username not in exclude_usernames and sender_user_id not in exclude_user_ids:
@@ -77,14 +71,17 @@ async def handler(event):
     except Exception as e:
         logging.error(f"Error handling message: {e}")
 
-# Main function to start the bot
-async def main():
+# Function to start the bot
+async def start_bot():
+    global client
+    # Attach the event handler once client is started
+    client.add_event_handler(handle_new_message, events.NewMessage())
     await client.run_until_disconnected()
 
 # Start the bot in a separate thread
 def start_telegram_bot():
     try:
-        asyncio.run(main())  # Run the bot using the default event loop
+        asyncio.run(start_bot())  # Run the bot using the default event loop
     except Exception as e:
         logging.error(f"Error: {e}")
         time.sleep(5)  # Reconnect in 5 seconds on error
@@ -102,6 +99,8 @@ def authenticate_route():
     success = asyncio.run(authenticate(phone_number))
     if success:
         is_running = True
+        # Start the bot now that the client is authenticated
+        threading.Thread(target=start_telegram_bot, daemon=True).start()
     return redirect(url_for('index'))
 
 @app.route('/authenticate_otp', methods=['POST'])
@@ -113,6 +112,7 @@ def authenticate_otp():
     if client:
         asyncio.run(client.sign_in(phone_number, otp))
         is_running = True  # Authentication successful
+        threading.Thread(target=start_telegram_bot, daemon=True).start()
     return redirect(url_for('index'))
 
 @app.route('/stop')
@@ -120,7 +120,8 @@ def stop():
     global is_running
     if is_running:
         is_running = False
-        client.disconnect()  # Gracefully disconnect the bot
+        if client:
+            client.disconnect()  # Gracefully disconnect the bot
     return redirect(url_for('index'))
 
 # Run the Flask app
