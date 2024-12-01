@@ -103,8 +103,8 @@ def authenticate_route():
         threading.Thread(target=start_telegram_bot, daemon=True).start()
         return redirect(url_for('index'))  # Direct back to index page
     else:
-        # Show OTP input form if OTP is required
-        return render_template('otp_form.html', phone_number=phone_number)  # Redirect to OTP form page
+        # OTP is required, render the OTP form with the phone number
+        return render_template('otp_form.html', phone_number=phone_number)  # Correctly redirect to OTP form
 
 @app.route('/authenticate_otp', methods=['POST'])
 def authenticate_otp():
@@ -121,6 +121,7 @@ def authenticate_otp():
             return redirect(url_for('index'))  # Return to index page after success
         except Exception as e:
             logging.error(f"Error during OTP sign-in: {e}")
+            # If OTP is invalid, re-render the form with an error message
             return render_template('otp_form.html', phone_number=phone_number, error="Invalid OTP")
     return redirect(url_for('index'))
 
