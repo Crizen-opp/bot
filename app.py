@@ -27,14 +27,14 @@ async def authenticate(phone_number):
     global client
     client = TelegramClient(MemorySession(), api_id, api_hash)
     await client.start(phone_number)
-    logging.info("Client started")
 
-    # Handle OTP if required
     if not await client.is_user_authorized():
+        # OTP is required, so we return False to prompt for OTP in the web interface
         logging.info("OTP required, please check your Telegram for the code.")
         return False  # OTP will be sent to the phone number
     logging.info("Client authenticated")
     return True
+
 
 # Function to handle new messages
 async def handle_new_message(event):
