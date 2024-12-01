@@ -98,13 +98,14 @@ def authenticate_route():
     # Start the authentication process
     success = asyncio.run(authenticate(phone_number))
     if success:
+        # OTP is not required or already authenticated; start the bot
         is_running = True
-        # Start the bot once authenticated
         threading.Thread(target=start_telegram_bot, daemon=True).start()
         return redirect(url_for('index'))  # Direct back to index page
     else:
         # OTP is required, render the OTP form with the phone number
-        return render_template('otp_form.html', phone_number=phone_number)  # Correctly redirect to OTP form
+        return render_template('otp_form.html', phone_number=phone_number)  # Show OTP form to the user
+
 
 @app.route('/authenticate_otp', methods=['POST'])
 def authenticate_otp():
@@ -115,15 +116,19 @@ def authenticate_otp():
     # Sign in with OTP
     if client:
         try:
+            # Attempt to sign in with the provided OTP
             asyncio.run(client.sign_in(phone_number, otp))
             is_running = True  # Authentication successful
+
+            # Only after the OTP is correct, start the bot
             threading.Thread(target=start_telegram_bot, daemon=True).start()
-            return redirect(url_for('index'))  # Return to index page after success
+
+            return redirect(url_for('index'))  # Redirect to the index page after success
         except Exception as e:
             logging.error(f"Error during OTP sign-in: {e}")
-            # If OTP is invalid, re-render the form with an error message
             return render_template('otp_form.html', phone_number=phone_number, error="Invalid OTP")
     return redirect(url_for('index'))
+
 
 @app.route('/stop')
 def stop():
