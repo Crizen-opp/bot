@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 import subprocess
 
-app = Flask(_name_)
+app = Flask(_bot_)
 process = None
 
 @app.route('/control', methods=['POST'])
