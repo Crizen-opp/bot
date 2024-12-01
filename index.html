@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Bot Control</title>
+</head>
+<body>
+    <h1>Telegram Bot Control</h1>
+
+    {% if is_running %}
+    <p>The bot is running.</p>
+    <form action="{{ url_for('stop') }}" method="get">
+        <button type="submit">Stop Bot</button>
+    </form>
+    {% else %}
+    <p>The bot is stopped.</p>
+    <form action="{{ url_for('start') }}" method="get">
+        <button type="submit">Start Bot</button>
+    </form>
+    {% endif %}
+
+</body>
+</html>
