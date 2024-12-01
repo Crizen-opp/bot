@@ -45,6 +45,27 @@
             margin: 5px 0;
             font-size: 14px;
         }
+        .input-section {
+            margin: 20px;
+        }
+        .input-section input {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .input-section button {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .input-section button:hover {
+            background-color: #45a049;
+        }
     </style>
 </head>
 <body>
@@ -68,7 +89,7 @@
         <a href="{{ url_for('stop') }}" class="btn">Stop Bot</a>
     </div>
 
-    <!-- Logs Section (if any log message is available) -->
+    <!-- Logs Section -->
     <div>
         <h3>Bot Logs:</h3>
         <div id="logs">
@@ -79,6 +100,25 @@
             {% endif %}
         </div>
     </div>
+
+    <!-- Input Section for Phone Number and OTP -->
+    {% if not is_running %}
+    <div class="input-section">
+        <h3>Enter Your Phone Number:</h3>
+        <form action="{{ url_for('authenticate') }}" method="POST">
+            <input type="text" name="phone_number" placeholder="Phone Number" required>
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+    {% else %}
+    <div class="input-section">
+        <h3>Enter OTP to Authenticate:</h3>
+        <form action="{{ url_for('authenticate_otp') }}" method="POST">
+            <input type="text" name="otp" placeholder="Enter OTP" required>
+            <button type="submit">Submit OTP</button>
+        </form>
+    </div>
+    {% endif %}
 
 </body>
 </html>
