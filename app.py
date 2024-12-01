@@ -101,7 +101,7 @@ def authenticate_route():
         is_running = True
         # Start the bot now that the client is authenticated
         threading.Thread(target=start_telegram_bot, daemon=True).start()
-    return redirect(url_for('index'))
+    return redirect(url_for('authenticate'))
 
 @app.route('/authenticate_otp', methods=['POST'])
 def authenticate_otp():
@@ -113,7 +113,7 @@ def authenticate_otp():
         asyncio.run(client.sign_in(phone_number, otp))
         is_running = True  # Authentication successful
         threading.Thread(target=start_telegram_bot, daemon=True).start()
-    return redirect(url_for('index'))
+    return redirect(url_for('authenticate'))
 
 @app.route('/stop')
 def stop():
@@ -122,7 +122,7 @@ def stop():
         is_running = False
         if client:
             client.disconnect()  # Gracefully disconnect the bot
-    return redirect(url_for('index'))
+    return redirect(url_for('authenticate'))
 
 # Run the Flask app
 if __name__ == '__main__':
