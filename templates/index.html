@@ -94,7 +94,9 @@
         <h3>Bot Logs:</h3>
         <div id="logs">
             {% if bot_logs %}
-                <p>{{ bot_logs }}</p>
+                {% for log in bot_logs %}
+                    <p>{{ log }}</p>
+                {% endfor %}
             {% else %}
                 <p>No logs available.</p>
             {% endif %}
