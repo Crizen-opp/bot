@@ -78,13 +78,12 @@ async def main():
 
 # Start the bot in a separate thread
 def start_telegram_bot():
-    loop = asyncio.new_event_loop()  # Create a new event loop for the thread
-    asyncio.set_event_loop(loop)  # Set the new event loop as the current loop for the thread
     try:
-        loop.run_until_complete(main())  # Start the event loop
+        asyncio.run(main())  # Run the bot using the default event loop
     except Exception as e:
         logging.error(f"Error: {e}")
         time.sleep(5)  # Reconnect in 5 seconds on error
+  # Reconnect in 5 seconds on error
 
 # Routes for Flask app
 @app.route('/')
