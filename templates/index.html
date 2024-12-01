@@ -85,8 +85,11 @@
     
     <!-- Buttons for starting and stopping the bot -->
     <div>
-        <a href="{{ url_for('start') }}" class="btn">Start Bot</a>
-        <a href="{{ url_for('stop') }}" class="btn">Stop Bot</a>
+        {% if not is_running %}
+            <a href="{{ url_for('authenticate') }}" class="btn">Start Bot</a>
+        {% else %}
+            <a href="{{ url_for('stop') }}" class="btn">Stop Bot</a>
+        {% endif %}
     </div>
 
     <!-- Logs Section -->
@@ -107,7 +110,7 @@
     {% if not is_running %}
     <div class="input-section">
         <h3>Enter Your Phone Number:</h3>
-        <form action="{{ url_for('authenticate') }}" method="POST">
+        <form action="{{ url_for('authenticate_route') }}" method="POST">
             <input type="text" name="phone_number" placeholder="Phone Number" required>
             <button type="submit">Submit</button>
         </form>
