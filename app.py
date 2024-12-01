@@ -2,12 +2,9 @@ from flask import Flask, render_template, redirect, url_for
 import threading
 import logging
 import time
-from telethon import TelegramClient, events
 import asyncio
+from telethon import TelegramClient, events
 from telethon.sessions import MemorySession
-
-
-
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -40,17 +37,19 @@ async def handler(event):
             sender_username = sender.username if sender.username else ""
             sender_user_id = sender.id
 
+            # List of usernames to exclude
             exclude_usernames = [
-                'vaishu9630','Universe9911','salbahepadin01','B4DCHILDD','xinchenganna','online7259','alwayssalbahe_kram','depressedpasayo','xinchengxiaoli','salbahenga','ILABYOUACEZYYY','Xincheng_Nikkkkkk','Saaalbahemeh','zariiiii_aaahh','LOUIE67889','DDAANNAAYYA','Xincheng_dayy','Angelaaaa0000000','BurgerkaaasakenBrrt','anna123abc1','DAANNAAYYAA','zhangmei123','xiaolong1123452','xiaohao66883','ILABYOUNGA','ameizxc','xincheng_nik','Xincheng_fei','countNumber1Bot','supermegabigb0y','superbigboOoy', 'Goldy6522','BurgerkaaasakenBrrt', 'levi_here69', 'Chariiiiiiiisss', 'cozur125',
-                'Shafffffiiiii','hanxin7889','juigi55','xinchengyanwan12','DoomCartel','lovieee_eee','xinchengasheng','baixin888999','angelamiii0000','xinchengasheng', 'jhejeeeeee','Angelababy000000','DANAYA_01','MRB2TH', 'salbahesilouieperosalbahedinako', 'CALI000000000', 'T4ngInmoPartXVIII', 
-                'loviieeeeeeeeeeee','ijsdghf88','shfafkl12','okicando9','sasuke666111','youaredog147','microsoft4567','DaaNaaYaaaa','xincheng6661','kmt200223','fdaslfka1','tunai22','mxdbfj22','smk750830','fanrui44','ainygr11','xincheng6661','xiao_an242424','hanxin7410','fanrui23','hanxin852','fanrui88','jcc4566','ymtg1126','hanxin412','xiaomi291123','fdgt445','hanxin965','huahua6634','wgsh22','MRB2TH','xinchang33','hanxin963','wsws223','xinchengyanwan1234','DANNAYYA','Xcrefund2','xincheng112233','xinchengsanwei','tunai23','xiaolai11222','angelamiii0000','sub777777', 'crafter0012','ainyge11','refundacc1','xiaohao1199','keepyamovinbroo','xcamei4', 'sanyangisathief', 'badingkanga', 'Whereareyoufromhomie', 
-                'NOTENGOBANGKARYA','xccustom_bot','tunai222','tunai111','tunai22','EyyyPppTttt','whoareyou147','youaredog147','stoptoban12','settin100','Whereareyoufromhomiee','qwe13120','baixin999888','xcgjcw521','xcpay01','jinhua55555','yanwan233','jhf554','jinhua3333','xdf251','waterlily1230', 'fanrui55','sddg52','dfs1243','tunai213','jbs5226','i198501','asdsa5585','xiaomi200022','jayne0000','hhgg5512','xiaolai201023','diha332','fanrui212','xincheng778899','hoelyfreakingshit', 'lusiiiiiiiiiiii', 'lusiyoudona', 'XCZF11','username1112226','xincheng9991','xiaolong1123452', 'ym2211142','atuthu159753', 'ym2203199'
-            ]
-            
-            exclude_user_ids = [  # List of user IDs to exclude
-                7716075514  # Add more user IDs as needed
+                'vaishu9630','Universe9911','salbahepadin01','B4DCHILDD','xinchenganna','online7259','alwayssalbahe_kram',
+                'depressedpasayo','xinchengxiaoli','salbahenga','ILABYOUACEZYYY','Xincheng_Nikkkkkk','Saaalbahemeh',
+                'zariiiii_aaahh','LOUIE67889','DDAANNAAYYA','Xincheng_dayy','Angelaaaa0000000','BurgerkaaasakenBrrt',
+                'anna123abc1','DAANNAAYYAA','zhangmei123','xiaolong1123452','xiaohao66883','ILABYOUNGA','ameizxc',
+                'xincheng_nik','Xincheng_fei','countNumber1Bot','supermegabigb0y','superbigboOoy','Goldy6522','BurgerkaaasakenBrrt'
             ]
 
+            # List of user IDs to exclude
+            exclude_user_ids = [7716075514]  # Add more user IDs as needed
+
+            # Exclude messages from filtered users and specific texts
             if sender_username not in exclude_usernames and sender_user_id not in exclude_user_ids:
                 exclude_texts = ['单笔费用', 'cancel', 'update', 'UPDATE', 'CANCEL']
                 exclude_characters = ["'", '.', ';', '0']
@@ -73,7 +72,7 @@ async def handler(event):
 
 # Main function to start the bot
 async def main():
-    await client.start()
+    await client.start()  # This will ask for phone number and OTP if not already logged in
     logging.info("Client started")
     await client.run_until_disconnected()
 
