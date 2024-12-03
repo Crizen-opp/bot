@@ -18,21 +18,24 @@ api_hash = 'eebd9bca724210a098f3f4b23822d1ef'
 client = None
 is_running = False
 phone_number = None
+bot_logs = []  # To store logs dynamically
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
 # Function to authenticate the Telegram client
 async def authenticate(phone_number):
-    global client
+    global client, bot_logs
     client = TelegramClient(MemorySession(), api_id, api_hash)
     await client.start(phone_number)
 
     if not await client.is_user_authorized():
         # OTP is required, so we return False to prompt for OTP in the web interface
         logging.info("OTP required, please check your Telegram for the code.")
+        bot_logs.append("OTP required, please check your Telegram for the code.")  # Log this event
         return False  # OTP will be sent to the phone number
     logging.info("Client authenticated")
+    bot_logs.append("Client authenticated")  # Log this event
     return True
 
 
@@ -40,6 +43,8 @@ async def authenticate(phone_number):
 async def handle_new_message(event):
     try:
         logging.info(f"Received message from {event.sender_id}: {event.message.text}")
+        bot_logs.append(f"Received message from {event.sender_id}: {event.message.text}")  # Log the message
+        
         message = "\n'"  # Define message to send
 
         # Logic for filtering messages and responding
@@ -60,16 +65,22 @@ async def handle_new_message(event):
                     if text_without_excluded_characters.strip():
                         await event.reply(message)
                         logging.info("Replied to the message")
+                        bot_logs.append("Replied to the message")
                     else:
                         logging.info("Message contains only excluded characters")
+                        bot_logs.append("Message contains only excluded characters")
                 else:
                     logging.info("Excluded message due to specific text")
+                    bot_logs.append("Excluded message due to specific text")
             else:
                 logging.info("Message did not meet criteria for a reply or is from an excluded username or user ID")
+                bot_logs.append("Message did not meet criteria for a reply or is from an excluded username or user ID")
         else:
             logging.info("Message is from a private chat, excluding from reply")
+            bot_logs.append("Message is from a private chat, excluding from reply")
     except Exception as e:
         logging.error(f"Error handling message: {e}")
+        bot_logs.append(f"Error handling message: {e}")
 
 # Function to start the bot
 async def start_bot():
@@ -84,15 +95,16 @@ def start_telegram_bot():
         asyncio.run(start_bot())  # Run the bot using the default event loop
     except Exception as e:
         logging.error(f"Error: {e}")
+        bot_logs.append(f"Error: {e}")  # Log the error
         time.sleep(5)  # Reconnect in 5 seconds on error
 
 @app.route('/')
 def index():
-    return render_template('index.html', is_running=is_running)
+    return render_template('index.html', is_running=is_running, bot_logs=bot_logs)
 
 @app.route('/authenticate', methods=['POST'])
 def authenticate_route():
-    global phone_number, is_running
+    global phone_number, is_running, bot_logs
     phone_number = request.form['phone_number']
 
     # Start the authentication process
@@ -101,6 +113,7 @@ def authenticate_route():
         # OTP is not required or already authenticated; start the bot
         is_running = True
         threading.Thread(target=start_telegram_bot, daemon=True).start()
+        bot_logs.append("Bot started")
         return redirect(url_for('index'))  # Direct back to index page
     else:
         # OTP is required, render the OTP form with the phone number
@@ -109,7 +122,7 @@ def authenticate_route():
 
 @app.route('/authenticate_otp', methods=['POST'])
 def authenticate_otp():
-    global client, is_running
+    global client, is_running, bot_logs
     otp = request.form['otp']
     phone_number = request.form['phone_number']
 
@@ -119,6 +132,7 @@ def authenticate_otp():
             # Attempt to sign in with the provided OTP
             asyncio.run(client.sign_in(phone_number, otp))
             is_running = True  # Authentication successful
+            bot_logs.append("OTP successful, bot authenticated")  # Log the success
 
             # Only after the OTP is correct, start the bot
             threading.Thread(target=start_telegram_bot, daemon=True).start()
@@ -126,17 +140,19 @@ def authenticate_otp():
             return redirect(url_for('index'))  # Redirect to the index page after success
         except Exception as e:
             logging.error(f"Error during OTP sign-in: {e}")
+            bot_logs.append(f"Error during OTP sign-in: {e}")  # Log the error
             return render_template('otp_form.html', phone_number=phone_number, error="Invalid OTP")
     return redirect(url_for('index'))
 
 
 @app.route('/stop')
 def stop():
-    global is_running
+    global is_running, bot_logs
     if is_running:
         is_running = False
         if client:
             client.disconnect()  # Gracefully disconnect the bot
+        bot_logs.append("Bot stopped")
     return redirect(url_for('authenticate'))
 
 # Run the Flask app
