@@ -124,19 +124,6 @@
         </form>
     </div>
     {% endif %}
-    <div>
-    <h3>Bot Logs:</h3>
-    <div id="logs">
-        {% if bot_logs %}
-            {% for log in bot_logs %}
-                <p>{{ log }}</p>
-            {% endfor %}
-        {% else %}
-            <p>No logs available.</p>
-        {% endif %}
-    </div>
-</div>
-
 
 </body>
 </html>
