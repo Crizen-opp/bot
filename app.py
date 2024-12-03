@@ -24,16 +24,29 @@ logging.basicConfig(level=logging.INFO)
 
 # Function to authenticate the Telegram client
 async def authenticate(phone_number):
-    global client
-    client = TelegramClient(MemorySession(), api_id, api_hash)
-    await client.start(phone_number)
+    # Clean up phone number
+    phone_number = phone_number.strip()  # Remove any leading/trailing spaces
+    if not phone_number.startswith("+"):
+        # If it doesn't start with +, add the country code (for India in this case)
+        phone_number = "+91" + phone_number.lstrip("0")  # Ensures the number starts with +91
 
-    if not await client.is_user_authorized():
-        # OTP is required, so we return False to prompt for OTP in the web interface
-        logging.info("OTP required, please check your Telegram for the code.")
-        return False  # OTP will be sent to the phone number
-    logging.info("Client authenticated")
-    return True
+    client = TelegramClient(MemorySession(), api_id, api_hash)
+    
+    try:
+        # Start the client with the sanitized phone number
+        await client.start(phone_number)
+        if not await client.is_user_authorized():
+            logging.info("OTP required, please check your Telegram for the code.")
+            return False  # OTP is needed
+        logging.info("Client authenticated successfully.")
+        return True
+    except telethon.errors.rpcerrorlist.PhoneNumberInvalidError as e:
+        logging.error(f"Invalid phone number error: {e}")
+        return False
+    except Exception as e:
+        logging.error(f"Error during authentication: {e}")
+        return False
+
 
 
 # Function to handle new messages
