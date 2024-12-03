@@ -17,13 +17,14 @@ api_hash = 'eebd9bca724210a098f3f4b23822d1ef'
 client = None
 is_running = False
 phone_number = None
+phone_code_hash = None  # Variable to store the phone code hash
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
 # Function to authenticate the Telegram client and handle OTP
 async def authenticate_and_sign_in(phone_number, otp=None):
-    global client
+    global client, phone_code_hash
     client = TelegramClient(MemorySession(), api_id, api_hash)
     
     try:
@@ -31,11 +32,12 @@ async def authenticate_and_sign_in(phone_number, otp=None):
         await client.connect()
         if otp:
             # If OTP is provided, try signing in
-            await client.sign_in(phone_number, otp)
+            await client.sign_in(phone_number, otp, phone_code_hash=phone_code_hash)
             return True  # OTP successfully verified
         else:
             # Request the OTP if it's not provided
-            await client.send_code_request(phone_number)
+            result = await client.send_code_request(phone_number)
+            phone_code_hash = result.phone_code_hash  # Save the phone code hash
             return False  # OTP needed
     except errors.rpcerrorlist.PhoneNumberInvalidError:
         logging.error("Invalid phone number")
