@@ -4,16 +4,68 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Enter OTP</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+        }
+        h1 {
+            color: #333;
+        }
+        .btn {
+            display: inline-block;
+            margin: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+        .input-section {
+            margin: 20px;
+        }
+        .input-section input {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .input-section button {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .input-section button:hover {
+            background-color: #45a049;
+        }
+    </style>
 </head>
 <body>
+
     <h1>Enter OTP</h1>
-    <form action="{{ url_for('authenticate_otp') }}" method="POST">
-        <input type="text" name="otp" placeholder="Enter OTP" required>
-        <input type="hidden" name="phone_number" value="{{ phone_number }}">
-        <button type="submit">Submit OTP</button>
-    </form>
-    {% if error %}
-        <p style="color:red;">{{ error }}</p>  <!-- Display error message if present -->
-    {% endif %}
+
+    <!-- OTP Form -->
+    <div class="input-section">
+        <h3>Enter OTP sent to your phone number: {{ phone_number }}</h3>
+        {% if error %}
+            <p style="color: red;">{{ error }}</p>
+        {% endif %}
+        <form action="{{ url_for('authenticate_otp') }}" method="POST">
+            <input type="hidden" name="phone_number" value="{{ phone_number }}">
+            <input type="text" name="otp" placeholder="Enter OTP" required>
+            <button type="submit">Submit OTP</button>
+        </form>
+    </div>
+
 </body>
 </html>
