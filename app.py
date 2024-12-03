@@ -48,7 +48,6 @@ async def authenticate(phone_number):
         return False
 
 
-
 # Function to handle new messages
 async def handle_new_message(event):
     try:
