@@ -3,7 +3,7 @@ import threading
 import logging
 import time
 import asyncio
-from telethon import TelegramClient, events
+from telethon import TelegramClient, events, errors  # Importing telethon errors
 from telethon.sessions import MemorySession
 
 # Initialize Flask app
@@ -30,6 +30,7 @@ async def authenticate(phone_number):
         # If it doesn't start with +, add the country code (for India in this case)
         phone_number = "+91" + phone_number.lstrip("0")  # Ensures the number starts with +91
 
+    global client
     client = TelegramClient(MemorySession(), api_id, api_hash)
     
     try:
@@ -40,7 +41,7 @@ async def authenticate(phone_number):
             return False  # OTP is needed
         logging.info("Client authenticated successfully.")
         return True
-    except telethon.errors.rpcerrorlist.PhoneNumberInvalidError as e:
+    except errors.rpcerrorlist.PhoneNumberInvalidError as e:
         logging.error(f"Invalid phone number error: {e}")
         return False
     except Exception as e:
@@ -156,4 +157,4 @@ def stop():
 
 # Run the Flask app
 if __name__ == '__main__':
-    app.run(debug=False, host='0.0.0.0', port=5000)  # Run the Flask app on port 5000
+    app.run(debug=True, host='0.0.0.0', port=5000)  # Run the Flask app on port 5000
