@@ -21,16 +21,22 @@ phone_number = None
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
-# Function to authenticate the Telegram client
-async def authenticate(phone_number):
+# Function to authenticate the Telegram client and handle OTP
+async def authenticate_and_sign_in(phone_number, otp=None):
     global client
     client = TelegramClient(MemorySession(), api_id, api_hash)
     
     try:
-        # Start the client and request an OTP
+        # Start the client and request an OTP if not provided
         await client.connect()
-        await client.send_code_request(phone_number)
-        return True  # OTP is required
+        if otp:
+            # If OTP is provided, try signing in
+            await client.sign_in(phone_number, otp)
+            return True  # OTP successfully verified
+        else:
+            # Request the OTP if it's not provided
+            await client.send_code_request(phone_number)
+            return False  # OTP needed
     except errors.rpcerrorlist.PhoneNumberInvalidError:
         logging.error("Invalid phone number")
         return False
@@ -96,11 +102,11 @@ def authenticate_route():
     if not phone_number.startswith("+"):
         phone_number = "+91" + phone_number.lstrip("0")  # Add country code for India
 
-    success = asyncio.run(authenticate(phone_number))
+    success = asyncio.run(authenticate_and_sign_in(phone_number))
     if success:
-        return render_template('otp_form.html', phone_number=phone_number)  # Prompt for OTP
+        return redirect(url_for('index'))  # Authenticated and bot started
     else:
-        return render_template('index.html', is_running=is_running, error="Invalid phone number")
+        return render_template('otp_form.html', phone_number=phone_number)  # Prompt for OTP
 
 @app.route('/authenticate_otp', methods=['POST'])
 def authenticate_otp():
@@ -109,17 +115,14 @@ def authenticate_otp():
     phone_number = request.form['phone_number']
 
     try:
-        # Create and set an event loop for this thread
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        
-        # Use the new event loop to sign in with OTP
-        loop.run_until_complete(client.sign_in(phone_number, otp))
-        is_running = True  # Mark as authenticated
-
-        # Start the bot after successful authentication
-        threading.Thread(target=start_telegram_bot, daemon=True).start()
-        return redirect(url_for('index'))
+        # Authenticate using the OTP in the same event loop
+        success = asyncio.run(authenticate_and_sign_in(phone_number, otp))
+        if success:
+            is_running = True  # Mark as authenticated
+            threading.Thread(target=start_telegram_bot, daemon=True).start()
+            return redirect(url_for('index'))
+        else:
+            return render_template('otp_form.html', phone_number=phone_number, error="Invalid OTP")
     except Exception as e:
         logging.error(f"Error during OTP sign-in: {e}")
         return render_template('otp_form.html', phone_number=phone_number, error="Invalid OTP")
