@@ -1,3 +1,5 @@
+import os
+import base64
 from flask import Flask, render_template, request, redirect, url_for
 import threading
 import logging
@@ -7,7 +9,7 @@ from telethon.sessions import MemorySession
 
 # Initialize Flask app
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'
+app.secret_key = 'your_secret_key'  # Required for session handling
 
 # API credentials for Telegram (replace with your actual credentials)
 api_id = 23679868
@@ -17,35 +19,39 @@ api_hash = 'eebd9bca724210a098f3f4b23822d1ef'
 client = None
 is_running = False
 phone_number = None
-phone_code_hash = None  # Variable to store the phone code hash
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
-# Function to authenticate the Telegram client and handle OTP
-async def authenticate_and_sign_in(phone_number, otp=None):
-    global client, phone_code_hash
-    client = TelegramClient(MemorySession(), api_id, api_hash)
+# Function to load the session from environment variable and save it as user.session file
+def load_session_from_env():
+    encoded_session = os.environ.get('USER_SESSION')
+    if encoded_session:
+        try:
+            # Decode the base64 string
+            decoded_session = base64.b64decode(encoded_session)
+
+            # Save it as a user.session file
+            with open('user.session', 'wb') as f:
+                f.write(decoded_session)
+            logging.info("Session loaded from environment variable.")
+        except Exception as e:
+            logging.error(f"Failed to decode and save session: {e}")
+    else:
+        logging.error("No USER_SESSION environment variable found.")
+
+# Call the function to load the session at the start of the app
+load_session_from_env()
+
+# Function to authenticate the Telegram client
+async def authenticate(phone_number):
+    global client
+    client = TelegramClient('user.session', api_id, api_hash)
     
     try:
-        # Start the client and request an OTP if not provided
         await client.connect()
-        if otp:
-            # If OTP is provided, try signing in
-            try:
-                # Log the phone_code_hash to track its value
-                logging.info(f"Attempting to sign in with OTP. phone_code_hash: {phone_code_hash}")
-                await client.sign_in(phone_number, otp, phone_code_hash=phone_code_hash)
-                return True  # OTP successfully verified
-            except errors.rpcerrorlist.CodeExpiredError:
-                logging.error("OTP expired, please request a new one.")
-                return False  # OTP expired
-        else:
-            # Request the OTP if it's not provided
-            result = await client.send_code_request(phone_number)
-            phone_code_hash = result.phone_code_hash  # Save the phone code hash
-            logging.info(f"OTP sent. phone_code_hash: {phone_code_hash}")  # Log the phone code hash
-            return False  # OTP needed
+        await client.send_code_request(phone_number)
+        return True  # OTP is required
     except errors.rpcerrorlist.PhoneNumberInvalidError:
         logging.error("Invalid phone number")
         return False
@@ -100,10 +106,6 @@ def start_telegram_bot():
     except Exception as e:
         logging.error(f"Error: {e}")
 
-@app.route('/')
-def index():
-    return render_template('index.html', is_running=is_running, phone_number=phone_number)
-
 @app.route('/authenticate', methods=['POST'])
 def authenticate_route():
     global phone_number
@@ -111,11 +113,11 @@ def authenticate_route():
     if not phone_number.startswith("+"):
         phone_number = "+91" + phone_number.lstrip("0")  # Add country code for India
 
-    success = asyncio.run(authenticate_and_sign_in(phone_number))
+    success = asyncio.run(authenticate(phone_number))
     if success:
-        return redirect(url_for('index'))  # Authenticated and bot started
-    else:
         return render_template('otp_form.html', phone_number=phone_number)  # Prompt for OTP
+    else:
+        return render_template('index.html', is_running=is_running, error="Invalid phone number")
 
 @app.route('/authenticate_otp', methods=['POST'])
 def authenticate_otp():
@@ -124,14 +126,17 @@ def authenticate_otp():
     phone_number = request.form['phone_number']
 
     try:
-        # Authenticate using the OTP in the same event loop
-        success = asyncio.run(authenticate_and_sign_in(phone_number, otp))
-        if success:
-            is_running = True  # Mark as authenticated
-            threading.Thread(target=start_telegram_bot, daemon=True).start()
-            return redirect(url_for('index'))
-        else:
-            return render_template('otp_form.html', phone_number=phone_number, error="Invalid OTP or OTP expired. Please try again.")
+        # Create and set an event loop for this thread
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        # Use the new event loop to sign in with OTP
+        loop.run_until_complete(client.sign_in(phone_number, otp))
+        is_running = True  # Mark as authenticated
+
+        # Start the bot after successful authentication
+        threading.Thread(target=start_telegram_bot, daemon=True).start()
+        return redirect(url_for('index'))
     except Exception as e:
         logging.error(f"Error during OTP sign-in: {e}")
         return render_template('otp_form.html', phone_number=phone_number, error="Invalid OTP")
