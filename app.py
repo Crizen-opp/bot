@@ -2,12 +2,12 @@ from flask import Flask, render_template, request, redirect, url_for
 import threading
 import logging
 import asyncio
-from telethon import TelegramClient, events, errors  # Importing telethon errors
+from telethon import TelegramClient, events, errors
 from telethon.sessions import MemorySession
 
 # Initialize Flask app
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # Required for session handling
+app.secret_key = 'your_secret_key'
 
 # API credentials for Telegram (replace with your actual credentials)
 api_id = 23679868
@@ -32,12 +32,19 @@ async def authenticate_and_sign_in(phone_number, otp=None):
         await client.connect()
         if otp:
             # If OTP is provided, try signing in
-            await client.sign_in(phone_number, otp, phone_code_hash=phone_code_hash)
-            return True  # OTP successfully verified
+            try:
+                # Log the phone_code_hash to track its value
+                logging.info(f"Attempting to sign in with OTP. phone_code_hash: {phone_code_hash}")
+                await client.sign_in(phone_number, otp, phone_code_hash=phone_code_hash)
+                return True  # OTP successfully verified
+            except errors.rpcerrorlist.CodeExpiredError:
+                logging.error("OTP expired, please request a new one.")
+                return False  # OTP expired
         else:
             # Request the OTP if it's not provided
             result = await client.send_code_request(phone_number)
             phone_code_hash = result.phone_code_hash  # Save the phone code hash
+            logging.info(f"OTP sent. phone_code_hash: {phone_code_hash}")  # Log the phone code hash
             return False  # OTP needed
     except errors.rpcerrorlist.PhoneNumberInvalidError:
         logging.error("Invalid phone number")
@@ -124,7 +131,7 @@ def authenticate_otp():
             threading.Thread(target=start_telegram_bot, daemon=True).start()
             return redirect(url_for('index'))
         else:
-            return render_template('otp_form.html', phone_number=phone_number, error="Invalid OTP")
+            return render_template('otp_form.html', phone_number=phone_number, error="Invalid OTP or OTP expired. Please try again.")
     except Exception as e:
         logging.error(f"Error during OTP sign-in: {e}")
         return render_template('otp_form.html', phone_number=phone_number, error="Invalid OTP")
