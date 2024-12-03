@@ -106,15 +106,20 @@ def authenticate_route():
 def authenticate_otp():
     global client, is_running
     otp = request.form['otp']
+    phone_number = request.form['phone_number']
 
     try:
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(client.sign_in(phone_number, otp))  # Sign in using OTP
-        is_running = True
-        threading.Thread(target=start_telegram_bot, daemon=True).start()  # Start bot
+        # Create and set an event loop for this thread
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        # Use the new event loop to sign in with OTP
+        loop.run_until_complete(client.sign_in(phone_number, otp))
+        is_running = True  # Mark as authenticated
+
+        # Start the bot after successful authentication
+        threading.Thread(target=start_telegram_bot, daemon=True).start()
         return redirect(url_for('index'))
-    except errors.rpcerrorlist.SessionPasswordNeededError:
-        return render_template('otp_form.html', phone_number=phone_number, error="Account requires 2FA password")
     except Exception as e:
         logging.error(f"Error during OTP sign-in: {e}")
         return render_template('otp_form.html', phone_number=phone_number, error="Invalid OTP")
